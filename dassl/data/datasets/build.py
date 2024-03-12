@@ -9,3 +9,10 @@ def build_dataset(cfg):
     if cfg.VERBOSE:
         print("Loading dataset: {}".format(cfg.DATASET.NAME))
     return DATASET_REGISTRY.get(cfg.DATASET.NAME)(cfg)
+
+def build_sf_dataset(cfg, train_data):
+    avai_datasets = DATASET_REGISTRY.registered_names()
+    check_availability(cfg.DATASET.NAME, avai_datasets)
+    if cfg.VERBOSE:
+        print("Loading dataset: {}".format(cfg.DATASET.NAME))
+    return DATASET_REGISTRY.get(cfg.DATASET.NAME)(cfg, train_data)

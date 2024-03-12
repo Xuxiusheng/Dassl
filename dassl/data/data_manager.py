@@ -5,7 +5,7 @@ from torch.utils.data import Dataset as TorchDataset
 
 from dassl.utils import read_image
 
-from .datasets import build_dataset
+from .datasets import build_sf_dataset
 from .samplers import build_sampler
 from .transforms import INTERPOLATION_MODES, build_transform
 
@@ -19,7 +19,8 @@ def build_data_loader(
     n_ins=2,
     tfm=None,
     is_train=True,
-    dataset_wrapper=None
+    dataset_wrapper=None, 
+    train_data=None
 ):
     # Build sampler
     sampler = build_sampler(
@@ -36,7 +37,7 @@ def build_data_loader(
 
     # Build data loader
     data_loader = torch.utils.data.DataLoader(
-        dataset_wrapper(cfg, data_source, transform=tfm, is_train=is_train),
+        dataset_wrapper(cfg, data_source, transform=tfm, is_train=is_train, traindata=train_data),
         batch_size=batch_size,
         sampler=sampler,
         num_workers=cfg.DATALOADER.NUM_WORKERS,
@@ -53,19 +54,13 @@ class DataManager:
     def __init__(
         self,
         cfg,
+        train_data, 
         custom_tfm_train=None,
         custom_tfm_test=None,
         dataset_wrapper=None
     ):
         # Load dataset
-        dataset = build_dataset(cfg)
-
-        # Build transform
-        if custom_tfm_train is None:
-            tfm_train = build_transform(cfg, is_train=True)
-        else:
-            print("* Using custom transform for training")
-            tfm_train = custom_tfm_train
+        dataset = build_sf_dataset(cfg, train_data)
 
         if custom_tfm_test is None:
             tfm_test = build_transform(cfg, is_train=False)
@@ -73,7 +68,6 @@ class DataManager:
             print("* Using custom transform for testing")
             tfm_test = custom_tfm_test
 
-        # Build train_loader_x
         train_loader_x = build_data_loader(
             cfg,
             sampler_type=cfg.DATALOADER.TRAIN_X.SAMPLER,
@@ -81,60 +75,23 @@ class DataManager:
             batch_size=cfg.DATALOADER.TRAIN_X.BATCH_SIZE,
             n_domain=cfg.DATALOADER.TRAIN_X.N_DOMAIN,
             n_ins=cfg.DATALOADER.TRAIN_X.N_INS,
-            tfm=tfm_train,
             is_train=True,
-            dataset_wrapper=dataset_wrapper
+            dataset_wrapper=SFDatasetWrapper, 
+            train_data=train_data
         )
 
-        # Build train_loader_u
-        train_loader_u = None
-        if dataset.train_u:
-            sampler_type_ = cfg.DATALOADER.TRAIN_U.SAMPLER
-            batch_size_ = cfg.DATALOADER.TRAIN_U.BATCH_SIZE
-            n_domain_ = cfg.DATALOADER.TRAIN_U.N_DOMAIN
-            n_ins_ = cfg.DATALOADER.TRAIN_U.N_INS
-
-            if cfg.DATALOADER.TRAIN_U.SAME_AS_X:
-                sampler_type_ = cfg.DATALOADER.TRAIN_X.SAMPLER
-                batch_size_ = cfg.DATALOADER.TRAIN_X.BATCH_SIZE
-                n_domain_ = cfg.DATALOADER.TRAIN_X.N_DOMAIN
-                n_ins_ = cfg.DATALOADER.TRAIN_X.N_INS
-
-            train_loader_u = build_data_loader(
-                cfg,
-                sampler_type=sampler_type_,
-                data_source=dataset.train_u,
-                batch_size=batch_size_,
-                n_domain=n_domain_,
-                n_ins=n_ins_,
-                tfm=tfm_train,
-                is_train=True,
-                dataset_wrapper=dataset_wrapper
-            )
-
-        # Build val_loader
-        val_loader = None
-        if dataset.val:
-            val_loader = build_data_loader(
+        test_loader_list = []
+        for dataset_domain in dataset.test:
+            test_loader = build_data_loader(
                 cfg,
                 sampler_type=cfg.DATALOADER.TEST.SAMPLER,
-                data_source=dataset.val,
+                data_source=dataset_domain,
                 batch_size=cfg.DATALOADER.TEST.BATCH_SIZE,
                 tfm=tfm_test,
                 is_train=False,
                 dataset_wrapper=dataset_wrapper
             )
-
-        # Build test_loader
-        test_loader = build_data_loader(
-            cfg,
-            sampler_type=cfg.DATALOADER.TEST.SAMPLER,
-            data_source=dataset.test,
-            batch_size=cfg.DATALOADER.TEST.BATCH_SIZE,
-            tfm=tfm_test,
-            is_train=False,
-            dataset_wrapper=dataset_wrapper
-        )
+            test_loader_list.append(test_loader)
 
         # Attributes
         self._num_classes = dataset.num_classes
@@ -144,9 +101,9 @@ class DataManager:
         # Dataset and data-loaders
         self.dataset = dataset
         self.train_loader_x = train_loader_x
-        self.train_loader_u = train_loader_u
-        self.val_loader = val_loader
-        self.test_loader = test_loader
+        self.train_loader_u = None
+        self.val_loader = None
+        self.test_loader = test_loader_list
 
         if cfg.VERBOSE:
             self.show_dataset_summary(cfg)
@@ -180,11 +137,35 @@ class DataManager:
             table.append(["# train_u", f"{len(self.dataset.train_u):,}"])
         if self.dataset.val:
             table.append(["# val", f"{len(self.dataset.val):,}"])
-        table.append(["# test", f"{len(self.dataset.test):,}"])
+        for i in range(len(self.dataset.test)):
+            table.append(["# test " + str(i), f"{len(self.dataset.test[i]):,}"])
 
         print(tabulate(table))
 
+class SFDatasetWrapper(TorchDataset):
 
+    def __init__(self, cfg, data_source, transform=None, is_train=False, train_data=None):
+        self.cfg = cfg
+        self.data_source = data_source
+        self.traindata = train_data
+        self.is_train = is_train
+
+        self.generator = self.traindata["generator"]
+
+    def __len__(self):
+        return len(self.data_source)
+    
+    def __getitem__(self, ind):
+        item = self.data_source[ind]
+        output = {
+            "label": item.label,
+            "classname": item.classname,
+            "style": item.style
+        }
+        text_feature = self.generator.get_text_feature(item.classname, item.style)
+        output["text_feature"] = text_feature
+        return output
+    
 class DatasetWrapper(TorchDataset):
 
     def __init__(self, cfg, data_source, transform=None, is_train=False):
