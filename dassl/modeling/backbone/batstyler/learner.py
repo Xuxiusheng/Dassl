@@ -21,10 +21,6 @@ class ETFHead(nn.Module):
 
         self.text = "a X style of a"
 
-        with torch.no_grad():
-            c_tokenize = clip.tokenize(self.classnames).cuda()
-            self.c_output = self.clip_model.encode_text(c_tokenize)
-
     def generate_orthogonal(self, in_features):
         rand_mat = np.random.random(size=(in_features, self.n_styles))
         orth_vec, _ = np.linalg.qr(rand_mat)
@@ -41,15 +37,6 @@ class ETFHead(nn.Module):
         output = torch.exp(torch.mm(x, self.etf_vec))
         label_col = torch.diag(output)
         diversity_loss = -torch.log(label_col / output.sum(dim=1)).mean()
-
-        # sc_text = []
-        # for c in self.classnames:
-        #     sc_text.append(self.text + " " + c)
-        # with torch.no_grad():
-        #     sc_tokenize = clip.tokenize(sc_text).cuda()
-        #     sc_embedding = self.clip_model.token_embedding(sc_tokenize)
-        #     prefix = sc_embedding[:, :2, :]
-        #     suffix = sc_embedding[:, 3:, :]
         return diversity_loss
 
     def forward(self):

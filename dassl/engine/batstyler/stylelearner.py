@@ -25,13 +25,18 @@ class PromptLearnerTrainer(SimpleTrainer):
 
     def build_model(self):
         cfg = self.cfg
-        self.model = ETFHead(cfg).cuda()
+        with open(cfg.TRAINER.BATSTYLER.CLASS_DIR, 'r') as f:
+            lines = f.readlines()
+        self.classnames = [" ".join(line.strip().split("_")).lower() for line in lines]
+        self.model = ETFHead(cfg, self.classnames).cuda()
         for name, param in self.model.named_parameters():
             if "clip" in name:
                 param.requires_grad_(False)
         self.optim = build_optimizer(self.model, cfg.OPTIM)
         self.sched = build_lr_scheduler(self.optim, cfg.OPTIM)
         self.register_model("model", self.model, self.optim)
+
+        
 
     def train(self):
         start_time = time.time()

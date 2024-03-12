@@ -33,7 +33,7 @@ class SFOffice(DatasetBase):
         classnames = train_data["classnames"]
         def _load_data_from_directory(directory):
             folders = listdir_nohidden(directory)
-            folders = sorted(folders, key=str.lower)
+            folders.sort()
             items_ = []
 
             for label, folder in enumerate(folders):
@@ -51,12 +51,14 @@ class SFOffice(DatasetBase):
                 train_dir = osp.join(dataset_dir, dname)
                 impath_label_list = _load_data_from_directory(train_dir)
 
-            for impath, lbl in impath_label_list:
+            for impath, _ in impath_label_list:
+                class_name = " ".join(impath.split("/")[-2].split("_")).lower()
+                lbl = classnames.index(class_name)
                 item = Datum(
                     impath=impath,
                     label=lbl,
                     domain=dname,
-                    classname=classnames[lbl]
+                    classname=class_name
                 )
                 items.append(item)
 

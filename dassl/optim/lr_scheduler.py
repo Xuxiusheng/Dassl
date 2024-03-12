@@ -80,7 +80,7 @@ class LinearWarmupScheduler(_BaseWarmupScheduler):
         ]
 
 
-def build_lr_scheduler(optimizer, optim_cfg):
+def build_lr_scheduler(optimizer, optim_cfg, epochs=None):
     """A function wrapper for building a learning rate scheduler.
 
     Args:
@@ -90,7 +90,7 @@ def build_lr_scheduler(optimizer, optim_cfg):
     lr_scheduler = optim_cfg.LR_SCHEDULER
     stepsize = optim_cfg.STEPSIZE
     gamma = optim_cfg.GAMMA
-    max_epoch = optim_cfg.MAX_EPOCH
+    max_epoch = optim_cfg.MAX_EPOCH if not epochs else epochs
 
     if lr_scheduler not in AVAI_SCHEDS:
         raise ValueError(
