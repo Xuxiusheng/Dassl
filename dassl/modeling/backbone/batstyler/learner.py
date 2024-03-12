@@ -6,20 +6,24 @@ import torch.nn.functional as F
 import math
 
 class ETFHead(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, classnames):
         super().__init__()
         self.cfg = cfg
         self.clip_model = load_clip(cfg)
         self.n_styles = cfg.TRAINER.BATSTYLER.N_STYLE
         self.generate_orthogonal(self.clip_model.visual.output_dim)
         self.ctx_dim = self.clip_model.ln_final.weight.shape[0]
-
+        self.classnames = classnames
         ctx_vectors = torch.empty(self.n_styles, 1, self.ctx_dim, dtype=torch.float32)
         ctx_vectors.requires_grad_(True)
         ctx_vectors = nn.init.normal_(ctx_vectors, std=0.02)
         self.style_embedding = nn.Parameter(ctx_vectors)
 
         self.text = "a X style of a"
+
+        with torch.no_grad():
+            c_tokenize = clip.tokenize(self.classnames).cuda()
+            self.c_output = self.clip_model.encode_text(c_tokenize)
 
     def generate_orthogonal(self, in_features):
         rand_mat = np.random.random(size=(in_features, self.n_styles))
@@ -36,8 +40,17 @@ class ETFHead(nn.Module):
     def loss(self, x):
         output = torch.exp(torch.mm(x, self.etf_vec))
         label_col = torch.diag(output)
-        loss = -torch.log(label_col / output.sum(dim=1)).mean()
-        return loss
+        diversity_loss = -torch.log(label_col / output.sum(dim=1)).mean()
+
+        # sc_text = []
+        # for c in self.classnames:
+        #     sc_text.append(self.text + " " + c)
+        # with torch.no_grad():
+        #     sc_tokenize = clip.tokenize(sc_text).cuda()
+        #     sc_embedding = self.clip_model.token_embedding(sc_tokenize)
+        #     prefix = sc_embedding[:, :2, :]
+        #     suffix = sc_embedding[:, 3:, :]
+        return diversity_loss
 
     def forward(self):
         with torch.no_grad():
@@ -53,7 +66,6 @@ class ETFHead(nn.Module):
                 suffix.repeat(self.n_styles, 1, 1)
             ], dim=1
         )
-
         output = self.clip_model.forward_text(prompt, tokenize.repeat(self.n_styles, 1))
         output = F.normalize(output, dim=1)
 

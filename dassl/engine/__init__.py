@@ -4,3 +4,4 @@ from .trainer import TrainerX, TrainerXU, TrainerBase, SimpleTrainer, SimpleNet 
 from .da import *
 from .dg import *
 from .ssl import *
+from .batstyler import *

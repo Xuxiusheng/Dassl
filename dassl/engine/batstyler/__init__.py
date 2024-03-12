@@ -1,1 +1,1 @@
-from .stylelearner import ETFHead
+from .stylelearner import PromptLearnerTrainer
