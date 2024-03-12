@@ -11,7 +11,7 @@ class OurStyleGenerator(nn.Module):
         self.cfg = cfg
         self.classnames = classnames
         self.n_cls = len(classnames)
-        self.n_style = cfg.TRAINER.PROMPTSTYLER.N_STYLES
+        self.n_style = cfg.TRAINER.PROMPTSTYLER.N_STYLE
         self.clip_model = clip_model
         self.weight_path = os.path.join(cfg.OUTPUT_DIR, "styler", cfg.TRAINER.PROMPTSTYLER.CHECKPOINT_NAME)
         self.base_text = "a X style of a"

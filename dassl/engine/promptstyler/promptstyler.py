@@ -13,7 +13,8 @@ import datetime
 import time
 import torch.nn.functional as F
 import os
-from dassl.ops import OurStyleGenerator
+from dassl.modeling.ops import OurStyleGenerator
+from dassl.evaluation import build_evaluator
 from dassl.data import DataManager
 from tqdm import tqdm
 import numpy as np
@@ -34,12 +35,14 @@ class PromptStylerLPTrainer(SimpleTrainer):
         
         self.build_model()
         self.build_data_loader()
+        self.evaluator = build_evaluator(cfg, lab2cname=self.lab2cname)
+        self.best_result = ([0, 0, 0, 0], 0)
     
     def build_model(self):
         cfg = self.cfg
         with open(cfg.TRAINER.PROMPTSTYLER.CLASS_DIR, 'r') as f:
             lines = f.readlines()
-        self.classnames = [line.strip() for line in lines]
+        self.classnames = [" ".join(line.strip().split("_")).lower() for line in lines]
         self.model = Classifier(cfg, self.classnames).cuda()
         for name, param in self.model.named_parameters():
             if "clip" in name:

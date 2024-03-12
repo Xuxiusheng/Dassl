@@ -23,8 +23,8 @@ class StyleTrainer(SimpleTrainer):
         self._writer = None
         self.cfg = cfg
         self.n_style = cfg.TRAINER.PROMPTSTYLER.N_STYLE
-        self.max_epoch = cfg.OPTIM.max_epoch
-        self.output_dir = os.path.join(cfg.OUTPUT_DIR, "styler", cfg.TRAINER.PROMPTSTYLER.CHECKPOINT_NAME)
+        self.max_epoch = cfg.OPTIM.MAX_EPOCH
+        self.output_dir = os.path.join(cfg.OUTPUT_DIR, "styler")
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
         self.weight_path = os.path.join(self.output_dir, cfg.TRAINER.PROMPTSTYLER.CHECKPOINT_NAME)

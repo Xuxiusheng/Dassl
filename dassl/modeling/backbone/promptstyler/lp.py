@@ -1,4 +1,4 @@
-from dassl.modeling import load_clip, clip
+from dassl.modeling.backbone import load_clip, clip
 from torch import nn
 import torch
 import torch.nn.functional as F

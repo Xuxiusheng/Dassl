@@ -8,7 +8,7 @@ import warnings
 from functools import partial
 from collections import OrderedDict
 import torch
-import torch.nn as nn
+from torch import nn
 
 from .tools import mkdir_if_missing
 
