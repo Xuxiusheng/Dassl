@@ -13,7 +13,7 @@ import datetime
 import time
 import torch.nn.functional as F
 import os
-from dassl.utils import OurStyleGenerator
+from dassl.ops import OurStyleGenerator
 from dassl.data import DataManager
 from tqdm import tqdm
 import numpy as np
