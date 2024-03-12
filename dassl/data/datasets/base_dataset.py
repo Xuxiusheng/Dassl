@@ -8,7 +8,25 @@ import gdown
 
 from dassl.utils import check_isfile
 
+class SFDatum:
+    def __init__(self, style=0, label=0, classname=""):
+        assert isinstance(classname, str)
+        self._style = style
+        self._label = label
+        self._classname = classname
 
+    @property
+    def label(self):
+        return self._label
+
+    @property
+    def style(self):
+        return self._style
+
+    @property
+    def classname(self):
+        return self._classname
+    
 class Datum:
     """Data instance which defines the basic attributes.
 
