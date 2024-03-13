@@ -42,7 +42,7 @@ class DecouplerTrainer(SimpleTrainer):
     
     def build_model(self):
         cfg = self.cfg
-        with open(cfg.TRAINER.BATSTYLER.CLASSES_DIR, 'r') as f:
+        with open(cfg.TRAINER.BATSTYLER.CLASS_DIR, 'r') as f:
             lines = f.readlines()
         self.classnames = [" ".join(line.strip().lower().split("_")) for line in lines]
         self.loss_fn = nn.NLLLoss()
@@ -71,7 +71,8 @@ class DecouplerTrainer(SimpleTrainer):
         self.before_train()
         for self.epoch in range(self.start_epoch, self.max_epoch):
             self.run_epoch()
-            self.after_epoch()
+            if self.epoch % 2 == 0:
+                self.after_epoch()
         self.after_train()
 
     def run_epoch(self):

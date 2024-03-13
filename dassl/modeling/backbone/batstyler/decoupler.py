@@ -9,9 +9,9 @@ class Decoupler(nn.Module):
         self.cfg = cfg
         self.classnames = classnames
         self.clip_model = load_clip(cfg)
-        self.s = cfg.TRAINER.OUR.S
-        self.m = cfg.TRAINER.OUR.M
-        self.eps = cfg.TRAINER.OUR.EPS
+        self.s = cfg.TRAINER.BATSTYLER.S
+        self.m = cfg.TRAINER.BATSTYLER.M
+        self.eps = cfg.TRAINER.BATSTYLER.EPS
         self.input_dim = self.clip_model.visual.output_dim
         self.fc = nn.Linear(self.input_dim, len(classnames), bias=False)
         nn.init.xavier_normal_(self.fc.weight)

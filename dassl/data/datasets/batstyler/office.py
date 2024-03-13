@@ -70,7 +70,7 @@ class SFOffice(DatasetBase):
         items = []
         classnames = train_data["classnames"]
         n_cls = train_data["n_cls"]
-        n_style = train_data["n_style"]
+        n_style = train_data["n_styles"]
 
         for c in range(n_cls):
             for s in range(n_style):

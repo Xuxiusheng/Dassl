@@ -36,15 +36,14 @@ class PromptLearnerTrainer(SimpleTrainer):
         self.sched = build_lr_scheduler(self.optim, cfg.OPTIM)
         self.register_model("model", self.model, self.optim)
 
-        
-
     def train(self):
         start_time = time.time()
         self.model.train()
         for epoch in range(self.max_epoch):
             self.optim.zero_grad()
             output = self.model()
-            loss = self.model.loss(output)
+            diversity_loss, consistency_loss = self.model.loss(output)
+            loss = diversity_loss + consistency_loss
             loss.backward()
             self.optim.step()
             self.sched.step()

@@ -144,10 +144,10 @@ class DataManager:
 
 class SFDatasetWrapper(TorchDataset):
 
-    def __init__(self, cfg, data_source, transform=None, is_train=False, train_data=None):
+    def __init__(self, cfg, data_source, transform=None, is_train=False, traindata=None):
         self.cfg = cfg
         self.data_source = data_source
-        self.traindata = train_data
+        self.traindata = traindata
         self.is_train = is_train
 
         self.generator = self.traindata["generator"]
@@ -168,7 +168,7 @@ class SFDatasetWrapper(TorchDataset):
     
 class DatasetWrapper(TorchDataset):
 
-    def __init__(self, cfg, data_source, transform=None, is_train=False):
+    def __init__(self, cfg, data_source, transform=None, is_train=False, traindata=None):
         self.cfg = cfg
         self.data_source = data_source
         self.transform = transform  # accept list (tuple) as input
